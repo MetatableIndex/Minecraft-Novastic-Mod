@@ -1,0 +1,156 @@
+package net.minecraft.entity.projectile;
+
+import java.util.List;
+
+import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.monster.EntityBlaze;
+import net.minecraft.init.Blocks;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.World;
+import net.minecraft.world.Explosion;
+
+public class EntityGhastball extends EntityThrowable
+{
+    private static final String __OBFID = "CL_00001722";
+	private Entity shootingEntity;
+
+    public EntityGhastball(World par1World)
+    {
+        super(par1World);
+    }
+
+    public EntityGhastball(World par1World, EntityLivingBase par2EntityLivingBase)
+    {
+        super(par1World, par2EntityLivingBase);
+    }
+
+    public EntityGhastball(World par1World, double par2, double par4, double par6)
+    {
+        super(par1World, par2, par4, par6);
+    }
+
+    /**
+     * Called when this EntityThrowable hits a block or entity.
+     */
+    protected void onImpact(MovingObjectPosition par1MovingObjectPosition)
+    {
+    	if (!this.worldObj.isRemote)
+        {
+            if (par1MovingObjectPosition.entityHit != null)
+            {
+            	if (!par1MovingObjectPosition.entityHit.isImmuneToFire())
+                {
+                    par1MovingObjectPosition.entityHit.setFire(5);
+                    this.playGhastMobSound();
+                    this.explode();
+                }
+            }
+            else
+            {
+                int var2 = par1MovingObjectPosition.blockX;
+                int var3 = par1MovingObjectPosition.blockY;
+                int var4 = par1MovingObjectPosition.blockZ;
+
+                switch (par1MovingObjectPosition.sideHit)
+                {
+                    case 0:
+                        --var3;
+                        break;
+
+                    case 1:
+                        ++var3;
+                        break;
+
+                    case 2:
+                        --var4;
+                        break;
+
+                    case 3:
+                        ++var4;
+                        break;
+
+                    case 4:
+                        --var2;
+                        break;
+
+                    case 5:
+                        ++var2;
+                }
+
+                BlockPos position = new BlockPos(var2, var3, var4);
+                if (this.worldObj.isAirBlock(position))
+                {
+                    this.worldObj.setTileEntity(position, this.worldObj.
+                    this.playGhastMobSound();
+                    this.explode();
+                }
+            }
+
+            this.setDead();
+        }
+    	
+        if (par1MovingObjectPosition.entityHit != null)
+        {
+            byte var2 = 0;
+
+            if (par1MovingObjectPosition.entityHit instanceof EntityBlaze)
+            {
+                var2 = 3;
+            }
+
+            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage(this, this.getThrower()), (float)var2);
+        }
+
+        for (int var3 = 0; var3 < 8; ++var3)
+        {
+            this.worldObj.spawnParticle(EnumParticleTypes.SNOWBALL, this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D, new int[0]);
+        }
+
+        if (!this.worldObj.isRemote)
+        {
+            this.setDead();
+        }
+    }
+
+	protected String getGhastMobSound()
+    {
+        return "mob.ghast.moan";
+    }
+    
+    public void playGhastMobSound()
+    {
+        String var1 = this.getGhastMobSound();
+
+        if (var1 != null)
+        {
+            this.playSound(var1, this.getSoundVolume(), this.getSoundPitch());
+        }
+    }
+    
+    protected float getSoundVolume()
+    {
+        return 2.0F;
+    }
+
+    protected float getSoundPitch()
+    {
+        return this.isChild() ? (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.5F : (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F;
+    }
+    
+    public boolean isChild()
+    {
+        return false;
+    }
+    
+    private void explode()
+    {
+        float var1 = 3.5F;
+        this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, var1, true);
+    }
+}
